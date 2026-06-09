@@ -50,16 +50,16 @@ Python 3.13 only (`.python-version`). Use `uv`, not pip.
 ## Serve
 
 ```bash
-docker-compose up -d                   # full stack: db + app + langfuse + prometheus + grafana + cadvisor
-uvicorn app.main:app --reload          # app only (port 8000, requires external db/langfuse)
+docker-compose up -d                   # core stack: db + app + prometheus + grafana + cadvisor
+uvicorn app.main:app --reload          # app only (port 8000, requires external db)
 python main.py                         # CLI demo only (no server)
 python examples/logging_demo.py        # logging demo
 ```
 
 - Grafana: `localhost:3001` (admin/admin)
-- Langfuse UI: `localhost:3000` (admin / admin123)
 - cAdvisor: `:8080`
-- `start.sh` is **deprecated** — Langfuse is now bundled in docker-compose; run `docker-compose up -d` instead.
+- Langfuse is **external** — run it separately (local background or cloud). Configure via `LANGFUSE_*` env vars.
+- `start.sh` is **deprecated** — use `docker-compose up -d` instead.
 
 ## Test / Lint
 
@@ -87,7 +87,7 @@ Stub directories (empty): `api/v1/`, `services/`, `scripts/`, `evals/`, `core/pr
 
 ## Gotchas
 
-- `.env.dev` is gitignored. `.env.example` had `LANGFUSE_HOST` but config uses `LANGFUSE_BASE_URL` — this is now fixed.
+- `.env.dev` is gitignored.
 - `ALLOWED_ORIGINS` accepts JSON arrays or comma-separated strings.
-- `start.sh` is **deprecated** — Langfuse is now bundled in docker-compose; run `docker-compose up -d` instead.
+- `start.sh` is **deprecated** — use `docker-compose up -d` instead.
 - `docker-compose down -v` deletes all volumes (PostgreSQL data, Grafana).

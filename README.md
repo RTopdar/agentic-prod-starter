@@ -65,16 +65,18 @@ Environment-specific `.env` files are loaded by `app/core/config.py` via Pydanti
 
 ### Containerization Strategy
 
-`docker-compose.yml` orchestrates the full stack:
+`docker-compose.yml` orchestrates the core stack. Langfuse (LLM observability) runs externally — either locally in the background or cloud-hosted — configured via `LANGFUSE_*` env vars.
 
-| Service  | Container            | Port  |
-| -------- | -------------------- | ----- |
-| App      | FastAPI (Uvicorn)    | 8000  |
-| Database | PostgreSQL + pgvector | 5432  |
-| Metrics  | Prometheus           | 9090  |
-| Viz      | Grafana              | 3001  |
-| Container | cAdvisor            | 8080  |
-| LLM Obs  | Langfuse             | 3000  |
+| Service   | Container             | Port  | In docker-compose |
+| --------- | --------------------- | ----- | ----------------- |
+| App       | FastAPI (Uvicorn)     | 8000  | Yes               |
+| Database  | PostgreSQL + pgvector | 5432  | Yes               |
+| Metrics   | Prometheus            | 9090  | Yes               |
+| Viz       | Grafana               | 3001  | Yes               |
+| Container | cAdvisor              | 8080  | Yes               |
+| LLM Obs   | Langfuse              | 3000  | External          |
+
+Start core services with `docker-compose up -d`. Start Langfuse separately (e.g. `docker compose -f docker-compose.langfuse.yml up -d` or use Langfuse Cloud).
 
 Start everything with `docker-compose up -d`.
 
@@ -237,8 +239,11 @@ uv sync
 cp .env.example .env.dev
 # Edit .env.dev with your API keys
 
-# 3. Start infrastructure (PostgreSQL, Langfuse, Prometheus, Grafana)
+# 3. Start infrastructure (PostgreSQL, Prometheus, Grafana)
 docker-compose up -d
+
+# (Optional) Start Langfuse — locally in background or use Langfuse Cloud
+# Update LANGFUSE_BASE_URL in .env.dev accordingly
 
 # 4. Run the FastAPI server
 uvicorn app.main:app --reload
