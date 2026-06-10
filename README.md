@@ -134,11 +134,11 @@ All models are re-exported via `app/models/database.py` for convenient imports.
 
 Pydantic schemas in `app/schemas/`:
 
-| Schema            | File                         | Purpose                              |
-| ----------------- | ---------------------------- | ------------------------------------ |
-| `UserCreate`      | `app/schemas/auth.py`        | Registration input with validation    |
-| `Token`           | `app/schemas/auth.py`        | JWT token response                   |
-| `UserResponse`    | `app/schemas/auth.py`        | Public user profile (no password)    |
+| Schema            | File                         | Purpose                                              |
+| ----------------- | ---------------------------- | ---------------------------------------------------- |
+| `UserCreate`      | `app/schemas/auth.py`        | Registration input with zxcvbn password validation    |
+| `Token`           | `app/schemas/auth.py`        | JWT token response                                   |
+| `UserResponse`    | `app/schemas/auth.py`        | Public user profile (no password)                    |
 | `Message`         | `app/schemas/chat.py`        | Chat message with content validation  |
 | `ChatRequest`     | `app/schemas/chat.py`        | Chat endpoint payload                |
 | `StreamResponse`  | `app/schemas/chat.py`        | SSE streaming chunk format           |
@@ -160,6 +160,8 @@ Utilities in `app/utils/sanitization.py` provide:
 
 The `Message` schema also includes a `field_validator` that rejects messages containing `<script>` tags.
 
+**Password Validation**: `UserCreate` schema uses `zxcvbn` (score ≥ 3 required) to evaluate password strength, with contextual feedback messages.
+
 ### Context Management
 
 **JWT Authentication**: Asymmetric RS256 tokens with separate access/refresh flows implemented in `app/utils/auth.py`. Key pair stored in `security/jwt_private.pem` / `security/jwt_public.pem`. Supports token creation, verification, and refresh.
@@ -173,6 +175,10 @@ The `Message` schema also includes a `field_validator` that rejects messages con
 ### Connection Pooling
 
 `DatabaseService` (singleton in `app/services/database.py`) creates a SQLAlchemy `QueuePool` with configurable `pool_size`, `max_overflow`, `pool_timeout`, and `pool_recycle`. Tables are auto-created on initialization (code-first migration).
+
+Key methods:
+- **User**: `create_user()`, `get_user_by_email()` (login flow), `get_user_by_id()` (token-based lookups)
+- **Session**: `create_session()`, `get_session()` (single fetch), `get_user_sessions()` (list by user)
 
 ### LLM Unavailability Handling
 
@@ -218,7 +224,13 @@ System prompts live in `app/core/prompts/` as markdown templates with `{variable
 
 ### Auth Endpoints
 
-> **Stubbed.** Schemas (`UserCreate`, `Token`, `UserResponse`) and utils (`create_tokens`, `verify_token`, `refresh_access_token`) are fully implemented but no routes are wired in `app/api/v1/`.
+`app/api/v1/auth.py` defines two FastAPI dependency functions used for protected routes:
+- **`get_current_user`** — validates the JWT access token, extracts user ID from `sub` claim, and verifies the user exists via `get_user_by_id()`
+- **`get_current_session`** — validates a session-specific JWT token, fetches the session via `get_session()`, and verifies it belongs to the authenticated user (returns 403 on mismatch)
+
+Schema-level password validation uses `zxcvbn` (score ≥ 3 required) with contextual feedback.
+
+> **Route handlers are stubbed.** Schemas (`UserCreate`, `Token`, `UserResponse`) and utils (`create_tokens`, `verify_token`, `refresh_access_token`) are implemented, but login/register/refresh endpoints are not yet wired.
 
 ### Real-Time Streaming
 
@@ -236,11 +248,24 @@ System prompts live in `app/core/prompts/` as markdown templates with `{variable
 
 ### Langfuse Tracing (LLM Observability)
 
-Langfuse tracing was added using the [Langfuse AI skill](https://github.com/langfuse/skills) (`npx skills add github.com/langfuse/skills`), which provided up-to-date integration guidance. The setup spans three layers:
+Langfuse is configured for per-request traces spanning HTTP, graph execution, memory operations, and LLM generations:
 
-- **HTTP middleware** (`langfuse_tracing_middleware` in `app/main.py`) — creates a trace per HTTP request (method + path as trace name), capturing input/output. Auto-nests via OTel context propagation.
-- **LLM service** (`LLMService` in `app/services/llm.py`) — wraps each `call()` in a parent span, with every `ainvoke()` traced as a LangChain generation via Langfuse's `CallbackHandler`. Model name, token usage, and latency are captured automatically. Retries and model fallbacks appear as child observations under the same trace.
-- **Lifecycle** — Langfuse client initializes at app startup (`init_langfuse()`) and flushes/shuts down gracefully on shutdown.
+- **HTTP middleware** (`langfuse_tracing_middleware` in `app/main.py`) — creates a root span per HTTP request (method + path). All downstream operations nest under this span automatically via Langfuse's async context propagation.
+- **Graph layer** (`LangGraphAgent` in `app/core/langgraph/graph.py`) — the `CallbackHandler` is passed in the graph's `config` so every LLM `ainvoke()` is traced as a generation (tokens, model, latency, cost). Manual spans wrap `memory_search` in `get_response()`, each tool invocation in `_tool_call()`, and `memory_add` in the fire-and-forget task.
+- **LLM service** (`LLMService` in `app/services/llm.py`) — intentionally has zero Langfuse code. The `CallbackHandler` from the graph config propagates to the LLM via LangChain's run context. Tenacity retries preserve the callback on every attempt.
+- **Lifecycle** — client initializes at startup (`init_langfuse()`) and flushes/shuts down on shutdown.
+
+The resulting trace hierarchy per request:
+
+```
+Span: "GET /chat" (middleware)              ← root
+  ├─ Span: "memory_search"                  ← manual
+  ├─ Generation: "openrouter-..."           ← auto (CallbackHandler)
+  ├─ Span: "tool_call:duckduckgo_search"    ← manual (per tool)
+  ├─ Generation: "openrouter-..."           ← auto (2nd LLM call)
+  └─ (fire-and-forget)
+       Trace: "memory_add" (session=X)      ← standalone, linked by session_id
+```
 
 Configured via `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` in `.env`.
 

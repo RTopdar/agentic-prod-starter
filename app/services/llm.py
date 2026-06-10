@@ -19,7 +19,6 @@ from tenacity import (
 )
 
 from app.core.config import settings
-from app.core.langfuse import get_callback_handler, get_langfuse_client
 from app.core.logging import logger
 
 
@@ -123,59 +122,40 @@ class LLMService:
         """Internal method that executes the actual API call."""
         if not self._llm:
             raise RuntimeError("LLM not initialized")
-        return await self._llm.ainvoke(
-            messages,
-            config={"callbacks": [get_callback_handler()]},
-        )
+        return await self._llm.ainvoke(messages)
 
     async def call(self, messages: List[BaseMessage]) -> BaseMessage:
         """
         Public interface. Wraps the retry logic with a Fallback loop.
-        If 'gpt-4o' fails 3 times, we switch to 'gpt-4o-mini' and try again.
+        If the primary model fails after exhausting retries, we switch to
+        the next available model and try again.
         """
-        langfuse = get_langfuse_client()
         total_models = len(LLMRegistry.LLMS)
         models_tried = 0
 
-        with langfuse.start_as_current_observation(
-            as_type="span",
-            name="llm-service-call",
-            input={
-                "message_count": len(messages),
-                "initial_model": LLMRegistry.LLMS[self._current_model_index]["name"],
-            },
-        ) as span:
-            while models_tried < total_models:
-                current_model = LLMRegistry.LLMS[self._current_model_index]["name"]
-                span.update(metadata={"model_attempt": current_model})
+        while models_tried < total_models:
+            current_model = LLMRegistry.LLMS[self._current_model_index]["name"]
 
-                try:
-                    result = await self._call_with_retry(messages)
-                    span.update(output={"status": "success", "model": current_model})
-                    return result
+            try:
+                result = await self._call_with_retry(messages)
+                return result
 
-                except Exception as e:
-                    models_tried += 1
-                    logger.error(
-                        "model_failed_exhausted_retries",
-                        model=current_model,
-                        error=str(e),
-                    )
+            except Exception as e:
+                models_tried += 1
+                logger.error(
+                    "model_failed_exhausted_retries",
+                    model=current_model,
+                    error=str(e),
+                )
 
-                    if models_tried >= total_models:
-                        break
+                if models_tried >= total_models:
+                    break
 
-                    self._switch_to_next_model()
+                self._switch_to_next_model()
 
-            span.update(
-                output={
-                    "status": "failed",
-                    "error": "All models exhausted",
-                }
-            )
-            raise RuntimeError(
-                "Failed to get response from any LLM after exhausting all options."
-            )
+        raise RuntimeError(
+            "Failed to get response from any LLM after exhausting all options."
+        )
 
     def get_llm(self) -> BaseChatModel:
         return self._llm

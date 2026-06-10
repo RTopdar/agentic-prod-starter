@@ -79,17 +79,20 @@ No pytest config or conftest.py exists — tests need `pytest-asyncio` for async
 - **`app/core/logging.py`** — structlog: colorful console (dev) / JSON (prod); `configure_logging()` fires on import
 - **`app/core/limiter.py`** — SlowAPI rate limiter (IP-keyed)
 - **`app/models/`** — SQLModel: `User`, `Session`, `Thread`. `database.py` re-exports all three.
-- **`app/schemas/`** — Pydantic: auth, chat, graph state
+- **`app/api/v1/auth.py`** — FastAPI dependencies: `get_current_user` (JWT → user lookup), `get_current_session` (session token → existence + ownership check)
+- **`app/services/database.py`** — `DatabaseService` singleton: `create_user`, `get_user_by_email`, `get_user_by_id`, `create_session`, `get_session`, `get_user_sessions`
+- **`app/schemas/`** — Pydantic: auth (zxcvbn password validation), chat, graph state
 - **`app/utils/auth.py`** — asymmetric JWT (RS256) with RSA keys in `security/jwt_*.pem`
+- **`app/utils/sanitization.py`** — `sanitize_string`, `sanitize_email`
 - **`app/openrouter_config.py`** — OpenAI SDK client pointed at OpenRouter
-- **`app/core/langfuse.py`** — Langfuse client init, auth check, flush/shutdown, and LangChain `CallbackHandler`
-- **`app/core/langgraph/graph.py`** — `LangGraphAgent` with StateGraph, Postgres checkpointer (`AsyncPostgresSaver`), mem0ai long-term memory
+- **`app/core/langfuse.py`** — Langfuse client init, auth check, flush/shutdown, and `CallbackHandler` factory
+- **`app/core/langgraph/graph.py`** — `LangGraphAgent` with StateGraph, Postgres checkpointer (`AsyncPostgresSaver`), mem0ai long-term memory, and centralized Langfuse tracing (LLM generations via `CallbackHandler` + manual spans for memory ops and tool calls)
 - **`app/core/langgraph/duckduckgosearch.py`** — DuckDuckGo search tool via `langchain_community`
 - **`app/core/prompts/system.md`** — System prompt template with `{variable}` injection
 - **`app/core/prompts/__init__.py`** — `load_system_prompt()` — loads markdown template and injects dynamic vars
-- **`app/services/llm.py`** — `LLMRegistry` + `LLMService` (tenacity retry + model fallback)
+- **`app/services/llm.py`** — `LLMRegistry` + `LLMService` (tenacity retry + model fallback, no Langfuse code)
 
-Stub directories (empty): `api/v1/`, `scripts/`, `evals/`. No Grafana dashboards or Prometheus configs exist yet.
+Stub directories (empty): `scripts/`, `evals/`. No Grafana dashboards or Prometheus configs exist yet.
 
 ## Gotchas
 

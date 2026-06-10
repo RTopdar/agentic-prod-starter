@@ -115,6 +115,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str = Field(..., alias="OPENROUTER_API_KEY")
     openrouter_model: str = Field(..., alias="OPENROUTER_MODEL")
     openrouter_backup_model: str = Field(..., alias="OPENROUTER_BACKUP_MODEL")
+    openrouter_embedding_model: str = Field(..., alias="OPENROUTER_EMBEDDING_MODEL")
 
     # ------------------------------------------------------------------------
     # JWT Security

@@ -69,6 +69,12 @@ class DatabaseService:
             statement = select(User).where(User.email == email)
             return session.exec(statement).first()
 
+    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """Fetch user by ID for token-based lookups."""
+        with Session(self.engine) as session:
+            statement = select(User).where(User.id == user_id)
+            return session.exec(statement).first()
+
     # --------------------------------------------------
     # Session Management
     # --------------------------------------------------
@@ -92,6 +98,12 @@ class DatabaseService:
                 .order_by(ChatSession.created_at)
             )
             return session.exec(statement).all()
+
+    async def get_session(self, session_id: int) -> Optional[ChatSession]:
+        """Fetch a single session by ID."""
+        with Session(self.engine) as session:
+            statement = select(ChatSession).where(ChatSession.id == session_id)
+            return session.exec(statement).first()
 
 
 # Create a global singleton instance

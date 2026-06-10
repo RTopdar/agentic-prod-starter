@@ -1,6 +1,8 @@
-import re
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator
+from zxcvbn import zxcvbn
+
+MIN_ZXCVBN_SCORE = 3
 
 
 # ==================================================
@@ -20,19 +22,16 @@ class UserCreate(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: SecretStr) -> SecretStr:
-        """
-        Enforce strong password policies.
-        """
         password = v.get_secret_value()
 
-        if len(password) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[0-9]", password):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            raise ValueError("Password must contain at least one special character")
+        result = zxcvbn(password)
+        if result["score"] < MIN_ZXCVBN_SCORE:
+            suggestions = result["feedback"].get("suggestions", [])
+            warning = result["feedback"].get("warning", "")
+            msg = warning or "Password is too weak"
+            if suggestions:
+                msg += f" — {' '.join(suggestions)}"
+            raise ValueError(msg)
 
         return v
 

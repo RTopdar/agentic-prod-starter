@@ -14,6 +14,7 @@ from mem0 import AsyncMemory
 
 from psycopg_pool import AsyncConnectionPool
 from app.core.config import Environment, settings
+from app.core.langfuse import get_langfuse_client
 from app.core.langgraph.tools import tools
 from app.core.logging import logger
 from app.core.prompts import load_system_prompt
@@ -123,23 +124,26 @@ class LangGraphAgent:
         The Tool Execution Node.
         Executes requested tools and returns results back to the chat node.
         """
+        langfuse = get_langfuse_client()
         outputs = []
         for tool_call in state.messages[-1].tool_calls:
-            # Execute the tool
-            tool_result = await self.tools_by_name[tool_call["name"]].ainvoke(
-                tool_call["args"]
-            )
-
-            # Format result as a ToolMessage
-            outputs.append(
-                ToolMessage(
-                    content=str(tool_result),
-                    name=tool_call["name"],
-                    tool_call_id=tool_call["id"],
+            with langfuse.start_as_current_observation(
+                name=f"tool_call:{tool_call['name']}", as_type="span"
+            ) as span:
+                span.set_input({"args": tool_call["args"]})
+                tool_result = await self.tools_by_name[tool_call["name"]].ainvoke(
+                    tool_call["args"]
                 )
-            )
+                span.set_output({"result": str(tool_result)[:500]})
 
-        # Update state with tool outputs and loop back to '_chat'
+                outputs.append(
+                    ToolMessage(
+                        content=str(tool_result),
+                        name=tool_call["name"],
+                        tool_call_id=tool_call["id"],
+                    )
+                )
+
         return Command(update={"messages": outputs}, goto="chat")
 
     # ==================================================
@@ -179,15 +183,28 @@ class LangGraphAgent:
         """
         if self._graph is None:
             await self.create_graph()
+
+        langfuse = get_langfuse_client()
+
         # 1. Retrieve relevant facts from Long-Term Memory (Vector Search)
-        # We search based on the user's last message
-        memory_client = await self._long_term_memory()
-        relevant_memory = await memory_client.search(
-            user_id=user_id, query=messages[-1].content
-        )
-        memory_context = "\n".join(
-            [f"* {res['memory']}" for res in relevant_memory.get("results", [])]
-        )
+        with langfuse.start_as_current_observation(
+            name="memory_search", as_type="span"
+        ) as span:
+            span.set_input({"user_id": user_id, "query": messages[-1].content})
+            memory_client = await self._long_term_memory()
+            relevant_memory = await memory_client.search(
+                user_id=user_id, query=messages[-1].content
+            )
+            memory_context = "\n".join(
+                [f"* {res['memory']}" for res in relevant_memory.get("results", [])]
+            )
+            span.set_output(
+                {
+                    "result_count": len(relevant_memory.get("results", [])),
+                    "context_length": len(memory_context),
+                }
+            )
+
         # 2. Run the Graph
         config = {
             "configurable": {"thread_id": session_id},
@@ -203,16 +220,26 @@ class LangGraphAgent:
         # 3. Update Memory in Background (Fire and Forget)
         # We don't want the user to wait for us to save new memories.
         asyncio.create_task(
-            self._update_long_term_memory(user_id, final_state["messages"])
+            self._update_long_term_memory(user_id, session_id, final_state["messages"])
         )
         return self._process_messages(final_state["messages"])
 
-    async def _update_long_term_memory(self, user_id: str, messages: list) -> None:
+    async def _update_long_term_memory(
+        self, user_id: str, session_id: str, messages: list
+    ) -> None:
         """Extracts and saves new facts from the conversation to pgvector."""
         try:
+            langfuse = get_langfuse_client()
+            trace = langfuse.trace(
+                name="memory_add",
+                session_id=session_id,
+                user_id=user_id,
+                input={"message_count": len(messages)},
+            )
             memory_client = await self._long_term_memory()
             # mem0ai automatically extracts facts using an LLM
             await memory_client.add(messages, user_id=user_id)
+            trace.update(output={"status": "success"})
         except Exception as e:
             logger.error("memory_update_failed", error=str(e))
 
