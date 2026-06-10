@@ -82,8 +82,14 @@ No pytest config or conftest.py exists — tests need `pytest-asyncio` for async
 - **`app/schemas/`** — Pydantic: auth, chat, graph state
 - **`app/utils/auth.py`** — asymmetric JWT (RS256) with RSA keys in `security/jwt_*.pem`
 - **`app/openrouter_config.py`** — OpenAI SDK client pointed at OpenRouter
+- **`app/core/langfuse.py`** — Langfuse client init, auth check, flush/shutdown, and LangChain `CallbackHandler`
+- **`app/core/langgraph/graph.py`** — `LangGraphAgent` with StateGraph, Postgres checkpointer (`AsyncPostgresSaver`), mem0ai long-term memory
+- **`app/core/langgraph/duckduckgosearch.py`** — DuckDuckGo search tool via `langchain_community`
+- **`app/core/prompts/system.md`** — System prompt template with `{variable}` injection
+- **`app/core/prompts/__init__.py`** — `load_system_prompt()` — loads markdown template and injects dynamic vars
+- **`app/services/llm.py`** — `LLMRegistry` + `LLMService` (tenacity retry + model fallback)
 
-Stub directories (empty): `api/v1/`, `services/`, `scripts/`, `evals/`, `core/prompts/`, `core/langgraph/tools/`. No Grafana dashboards or Prometheus configs exist yet.
+Stub directories (empty): `api/v1/`, `scripts/`, `evals/`. No Grafana dashboards or Prometheus configs exist yet.
 
 ## Gotchas
 

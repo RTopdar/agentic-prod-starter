@@ -7,15 +7,21 @@ the structured logging middleware.
 """
 
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.logging import logger, log_request_response
 from app.core.config import settings
+from app.core.langfuse import (
+    get_langfuse_client,
+    init_langfuse,
+    flush_langfuse,
+    shutdown_langfuse,
+)
+from app.core.logging import logger, log_request_response
 
 
 @asynccontextmanager
@@ -29,10 +35,14 @@ async def lifespan(app: FastAPI):
         allowed_origins=settings.allowed_origins,
     )
 
+    init_langfuse()
+
     yield
 
     # Shutdown
     logger.info("FastAPI application shutting down")
+    flush_langfuse()
+    shutdown_langfuse()
 
 
 # Create FastAPI application
@@ -60,6 +70,31 @@ app.add_middleware(
 async def logging_middleware(request: Request, call_next):
     """Log all HTTP requests and responses."""
     return await log_request_response(request, call_next)
+
+
+# Add Langfuse tracing middleware
+@app.middleware("http")
+async def langfuse_tracing_middleware(request: Request, call_next):
+    """Create a Langfuse trace for each HTTP request."""
+    langfuse = get_langfuse_client()
+    trace_name = f"{request.method} {request.url.path}"
+
+    with langfuse.start_as_current_observation(
+        as_type="span",
+        name=trace_name,
+        input={
+            "method": request.method,
+            "path": request.url.path,
+            "query": dict(request.query_params),
+        },
+    ) as span:
+        response = await call_next(request)
+        span.update(
+            output={
+                "status_code": response.status_code,
+            }
+        )
+        return response
 
 
 @app.exception_handler(HTTPException)

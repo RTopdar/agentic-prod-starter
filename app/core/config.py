@@ -150,6 +150,11 @@ class Settings(BaseSettings):
     rate_limit_login: str = Field(..., alias="RATE_LIMIT_LOGIN")
 
     # ------------------------------------------------------------------------
+    # LLM Retry Configuration
+    # ------------------------------------------------------------------------
+    max_llm_call_retries: int = Field(..., alias="MAX_LLM_CALL_RETRIES")
+
+    # ------------------------------------------------------------------------
     # Logging
     # ------------------------------------------------------------------------
     log_level: str = Field(..., alias="LOG_LEVEL")
@@ -208,7 +213,11 @@ class Settings(BaseSettings):
         return bool(v)
 
     @field_validator(
-        "postgres_port", "postgres_pool_size", "postgres_max_overflow", mode="before"
+        "postgres_port",
+        "postgres_pool_size",
+        "postgres_max_overflow",
+        "max_llm_call_retries",
+        mode="before",
     )
     @classmethod
     def parse_ints(cls, v: Any) -> int:

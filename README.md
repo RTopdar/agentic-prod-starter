@@ -45,6 +45,38 @@ A production-grade reference template for building agentic AI systems with FastA
 
 ---
 
+## Quick Start
+
+```bash
+# 1. Clone and install dependencies
+uv sync
+
+# 2. Copy environment configuration
+cp .env.example .env.dev
+# Edit .env.dev with your API keys
+
+# 3. Start infrastructure (PostgreSQL, Prometheus, Grafana)
+docker-compose up -d
+
+# (Optional) Start Langfuse — locally in background or use Langfuse Cloud
+# Update LANGFUSE_BASE_URL in .env.dev accordingly
+
+# 4. Run the FastAPI server
+uvicorn app.main:app --reload
+
+# 5. Verify
+curl http://localhost:8000/health
+```
+
+## Lint / Test
+
+```bash
+ruff check app/ && ruff format --check app/
+pytest
+```
+
+---
+
 ## Creating Modular Codebase
 
 ### Managing Dependencies
@@ -144,7 +176,12 @@ The `Message` schema also includes a `field_validator` that rejects messages con
 
 ### LLM Unavailability Handling
 
-`LLMRegistry` in `app/services/llm.py` registers primary and backup models via `ChatOpenRouter`. The backup model serves as a fallback when the primary is unavailable.
+`LLMRegistry` in `app/services/llm.py` registers primary and backup models via `ChatOpenRouter`. The `LLMService` resilience layer combines two strategies:
+
+1. **Tenacity retry** — each LLM call retries up to `MAX_LLM_CALL_RETRIES` times with exponential backoff (2s, 4s, 8s...). Catches rate limits, timeouts, connection drops, and 5xx errors.
+2. **Model fallback** — if retries are exhausted for one model, `LLMService` switches to the next registered model and retries from scratch. Fails only after all models are exhausted.
+
+This means a transient OpenRouter hiccup is absorbed by retries, while a model-specific outage triggers automatic fallback to the backup model (e.g. DeepSeek → Ling 2.6 Flash).
 
 ### Circuit Breaking
 
@@ -156,11 +193,24 @@ The `Message` schema also includes a `field_validator` that rejects messages con
 
 ### Long-Term Memory Integration
 
-> **Stubbed.** `mem0ai` dependency is declared in `pyproject.toml`, and `GraphState` includes a `long_term_memory` field. Integration with `app/utils/graph.py` is planned.
+`LangGraphAgent` in `app/core/langgraph/graph.py` integrates mem0ai for long-term memory backed by pgvector:
+- On each user message, it searches pgvector for relevant memories and injects them into the system prompt via `{long_term_memory}`.
+- After each response, extracted facts are saved to pgvector asynchronously (fire-and-forget).
+- Configured via `POSTGRES_*` env vars; uses `text-embedding-3-small` for embeddings.
+
+### LangGraph Workflow (StateGraph + Checkpointing)
+
+The `LangGraphAgent` builds a two-node `StateGraph`:
+- **`chat` node** — loads system prompt (with memory context), calls `LLMService`, routes to `tool_call` or `END` if the model requests a tool.
+- **`tool_call` node** — executes the requested tool and loops back to `chat`.
+- Persistence is handled by `AsyncPostgresSaver` (PostgreSQL checkpointer), enabling session-level state history per `thread_id`.
 
 ### Tool Calling Feature
 
-> **Stubbed.** Directory exists at `app/core/langgraph/tools/`. No tool implementations yet.
+Tools are registered in `app/core/langgraph/tools/__init__.py`. Currently available:
+- **DuckDuckGo Search** (`app/core/langgraph/duckduckgosearch.py`) — web search via `DuckDuckGoSearchResults` (10 results, error-tolerant).
+
+System prompts live in `app/core/prompts/` as markdown templates with `{variable}` injection via `load_system_prompt()`.
 
 ---
 
@@ -183,6 +233,16 @@ The `Message` schema also includes a `field_validator` that rejects messages con
 - Prometheus and Grafana are configured in `docker-compose.yml` with provisioning directories (`prometheus/`, `grafana/`).
 - `prometheus-client` is a declared dependency.
 - No custom metrics or dashboards are defined yet.
+
+### Langfuse Tracing (LLM Observability)
+
+Langfuse tracing was added using the [Langfuse AI skill](https://github.com/langfuse/skills) (`npx skills add github.com/langfuse/skills`), which provided up-to-date integration guidance. The setup spans three layers:
+
+- **HTTP middleware** (`langfuse_tracing_middleware` in `app/main.py`) — creates a trace per HTTP request (method + path as trace name), capturing input/output. Auto-nests via OTel context propagation.
+- **LLM service** (`LLMService` in `app/services/llm.py`) — wraps each `call()` in a parent span, with every `ainvoke()` traced as a LangChain generation via Langfuse's `CallbackHandler`. Model name, token usage, and latency are captured automatically. Retries and model fallbacks appear as child observations under the same trace.
+- **Lifecycle** — Langfuse client initializes at app startup (`init_langfuse()`) and flushes/shuts down gracefully on shutdown.
+
+Configured via `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL` in `.env`.
 
 ### Middleware Based Testing
 
@@ -229,36 +289,6 @@ The application uses FastAPI's async lifecycle (`lifespan` context manager) and 
 
 ---
 
-## Quick Start
 
-```bash
-# 1. Clone and install dependencies
-uv sync
-
-# 2. Copy environment configuration
-cp .env.example .env.dev
-# Edit .env.dev with your API keys
-
-# 3. Start infrastructure (PostgreSQL, Prometheus, Grafana)
-docker-compose up -d
-
-# (Optional) Start Langfuse — locally in background or use Langfuse Cloud
-# Update LANGFUSE_BASE_URL in .env.dev accordingly
-
-# 4. Run the FastAPI server
-uvicorn app.main:app --reload
-
-# 5. Verify
-curl http://localhost:8000/health
-```
-
-## Lint / Test
-
-```bash
-ruff check app/ && ruff format --check app/
-pytest
-```
-
----
 
 Built with FastAPI, LangChain/LangGraph, SQLModel, OpenRouter, Langfuse, Prometheus/Grafana.
