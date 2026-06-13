@@ -88,11 +88,10 @@ async def get_current_session(
         token = sanitize_string(credentials.credentials)
 
         payload = verify_token(token)
-        session_id_str = payload.get("sub")
-        if session_id_str is None:
+        session_id = payload.get("sub")
+        if session_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        session_id = int(session_id_str)
         session = await database_service.get_session(session_id)
         if session is None:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -113,12 +112,10 @@ async def get_current_session(
         return session
     except ValueError as ve:
         raise HTTPException(status_code=422, detail="Invalid token format")
-    
-
 
 
 @router.post("/register", response_model=UserResponse)
-@limiter.limit(settings.RATE_LIMIT_ENDPOINTS["register"][0])
+@limiter.limit(settings.rate_limit["register"])
 async def register_user(request: Request, user_data: UserCreate):
     """
     Register a new user.
@@ -133,27 +130,29 @@ async def register_user(request: Request, user_data: UserCreate):
             raise HTTPException(status_code=400, detail="Email already registered")
         # 3. Create User (Hash happens inside model)
         # Note: User.hash_password is static, but we handle it in service/model logic usually.
-        # Here we pass the raw password to the service which should handle hashing, 
-        # or hash it here if the service expects a hash. 
+        # Here we pass the raw password to the service which should handle hashing,
+        # or hash it here if the service expects a hash.
         # Based on our service implementation earlier, let's hash it here:
         hashed = User.hash_password(password)
-        user = await database_service.create_user(email=sanitized_email, password_hash=hashed)
+        user = await database_service.create_user(
+            email=sanitized_email, password_hash=hashed
+        )
         # 4. Auto-login (Mint token)
         token = create_tokens(str(user.id))
         return UserResponse(id=user.id, email=user.email, token=token)
-        
+
     except ValueError as ve:
         logger.warning("registration_validation_failed", error=str(ve))
         raise HTTPException(status_code=422, detail=str(ve))
-    
+
 
 @router.post("/login", response_model=TokenResponse)
-@limiter.limit(settings.RATE_LIMIT_ENDPOINTS["login"][0])
+@limiter.limit(settings.rate_limit["login"])
 async def login(
-    request: Request, 
-    username: str = Form(...), 
-    password: str = Form(...), 
-    grant_type: str = Form(default="password")
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    grant_type: str = Form(default="password"),
 ):
     """
     Authenticate user and return JWT token.
@@ -174,13 +173,48 @@ async def login(
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        token = create_access_token(str(user.id))
-        
+        token = create_tokens(str(user.id))
+
         logger.info("user_logged_in", user_id=user.id)
-        return TokenResponse(
-            access_token=token.access_token, 
-            token_type="bearer", 
-            expires_at=token.expires_at
-        )
+        return TokenResponse(token)
     except ValueError as ve:
         raise HTTPException(status_code=422, detail=str(ve))
+
+
+@router.post("/session", response_model=SessionResponse)
+async def create_session(user: User = Depends(get_current_user)):
+    """
+    Create a new chat session (thread) for the authenticated user.
+    """
+    try:
+        # Generate a secure random UUID
+        session_id = str(uuid.uuid4())
+
+        # Persist to DB
+        session = await database_service.create_session(session_id, user.id)
+        # Create a token specifically for this session ID
+        # This token allows the Chatbot API to identify which thread to write to
+        token = create_access_token(session_id)
+        logger.info("session_created", session_id=session_id, user_id=user.id)
+        return SessionResponse(session_id=session_id, name=session.name, token=token)
+
+    except Exception as e:
+        logger.error("session_creation_failed", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+
+@router.get("/sessions", response_model=List[SessionResponse])
+async def get_user_sessions(user: User = Depends(get_current_user)):
+    """
+    Retrieve all historical chat sessions for the user.
+    """
+    sessions = await database_service.get_user_sessions(user.id)
+    return [
+        SessionResponse(
+            session_id=s.id,
+            name=s.name,
+            # We re-issue tokens so the UI can resume these chats
+            token=create_access_token(s.id),
+        )
+        for s in sessions
+    ]

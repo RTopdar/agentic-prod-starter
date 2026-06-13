@@ -1,0 +1,307 @@
+{
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/settings.json": {
+    "mtime": 1781347826.8393188,
+    "ast_hash": "e1073342e958ac9f00716938c8f165e3",
+    "semantic_hash": "e1073342e958ac9f00716938c8f165e3"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/opencode.json": {
+    "mtime": 1781347804.6223822,
+    "ast_hash": "e5f74d14a81702b55bdf53b33ec991d7",
+    "semantic_hash": "e5f74d14a81702b55bdf53b33ec991d7"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/package.json": {
+    "mtime": 1781112713.5535123,
+    "ast_hash": "a30a9315b4ba10b5fde2fbc0915deb92",
+    "semantic_hash": "a30a9315b4ba10b5fde2fbc0915deb92"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/plugins/graphify.js": {
+    "mtime": 1781347847.034951,
+    "ast_hash": "64ccd3c03dbfe0980b6095766f5c4e52",
+    "semantic_hash": "64ccd3c03dbfe0980b6095766f5c4e52"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/api/v1/auth.py": {
+    "mtime": 1781121758.893307,
+    "ast_hash": "f905463acd4eac07f38b72a25474d21a",
+    "semantic_hash": "f905463acd4eac07f38b72a25474d21a"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/config.py": {
+    "mtime": 1781113664.9904335,
+    "ast_hash": "bd5fd9c7a07f147daba09a340139a8c4",
+    "semantic_hash": "bd5fd9c7a07f147daba09a340139a8c4"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/langfuse.py": {
+    "mtime": 1781098520.976988,
+    "ast_hash": "f5c65b3ca9f37dbc590e5dcb931d5ceb",
+    "semantic_hash": "f5c65b3ca9f37dbc590e5dcb931d5ceb"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/langgraph/duckduckgosearch.py": {
+    "mtime": 1781112773.9183967,
+    "ast_hash": "c3bcd4076daaaa74cac252edb3074fd3",
+    "semantic_hash": "c3bcd4076daaaa74cac252edb3074fd3"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/langgraph/graph.py": {
+    "mtime": 1781118972.0021515,
+    "ast_hash": "126fa40327dccfd44a29de63fb336e81",
+    "semantic_hash": "126fa40327dccfd44a29de63fb336e81"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/langgraph/tools/__init__.py": {
+    "mtime": 1781113048.6702404,
+    "ast_hash": "5a065c924caff9cbf4aa7eb6cf7cc194",
+    "semantic_hash": "5a065c924caff9cbf4aa7eb6cf7cc194"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/limiter.py": {
+    "mtime": 1780859251.7652571,
+    "ast_hash": "d72828bee5e1d7bd56d2983bc45f8756",
+    "semantic_hash": "d72828bee5e1d7bd56d2983bc45f8756"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/logging.py": {
+    "mtime": 1780861353.6233435,
+    "ast_hash": "5df5544da08b5893f1802de804ff0713",
+    "semantic_hash": "5df5544da08b5893f1802de804ff0713"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/prompts/__init__.py": {
+    "mtime": 1781112617.6098197,
+    "ast_hash": "1978cb5b48f803b50eca40b27e590954",
+    "semantic_hash": "1978cb5b48f803b50eca40b27e590954"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/main.py": {
+    "mtime": 1781093762.3182163,
+    "ast_hash": "d048c7c78aeb78a9746cd831f8c393d5",
+    "semantic_hash": "d048c7c78aeb78a9746cd831f8c393d5"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/models/base.py": {
+    "mtime": 1780859257.4338706,
+    "ast_hash": "cf462f697e103aeac26e6bc8f92ad174",
+    "semantic_hash": "cf462f697e103aeac26e6bc8f92ad174"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/models/database.py": {
+    "mtime": 1780857046.6530533,
+    "ast_hash": "a18c8e0d38a39c0fc7c17663890c934d",
+    "semantic_hash": "a18c8e0d38a39c0fc7c17663890c934d"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/models/session.py": {
+    "mtime": 1780859257.4375355,
+    "ast_hash": "1e0b46248590ba226358c10eb0a3f851",
+    "semantic_hash": "1e0b46248590ba226358c10eb0a3f851"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/models/thread.py": {
+    "mtime": 1780859257.4337814,
+    "ast_hash": "e49fd2eb1fe0b22e8d3aba5f2ba8e341",
+    "semantic_hash": "e49fd2eb1fe0b22e8d3aba5f2ba8e341"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/models/user.py": {
+    "mtime": 1780859257.4410262,
+    "ast_hash": "6aa13c9cc0aabba7a5a0178528696109",
+    "semantic_hash": "6aa13c9cc0aabba7a5a0178528696109"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/openrouter_config.py": {
+    "mtime": 1780857392.734551,
+    "ast_hash": "325dd8b4a812cfc79cb03245f211d235",
+    "semantic_hash": "325dd8b4a812cfc79cb03245f211d235"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/schemas/auth.py": {
+    "mtime": 1781121463.6374052,
+    "ast_hash": "988334e258b8b02f9bcd0ac7419e0c0a",
+    "semantic_hash": "988334e258b8b02f9bcd0ac7419e0c0a"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/schemas/chat.py": {
+    "mtime": 1781014984.04493,
+    "ast_hash": "d4b0bb9fd5e1efe38f34542b57b69e38",
+    "semantic_hash": "d4b0bb9fd5e1efe38f34542b57b69e38"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/schemas/graph.py": {
+    "mtime": 1780859257.4370022,
+    "ast_hash": "44798ea8cd8203161e4660a9d5c55f06",
+    "semantic_hash": "44798ea8cd8203161e4660a9d5c55f06"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/services/database.py": {
+    "mtime": 1781120753.5893726,
+    "ast_hash": "634b655d089382af93a01ebb040866d3",
+    "semantic_hash": "634b655d089382af93a01ebb040866d3"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/services/llm.py": {
+    "mtime": 1781118950.097042,
+    "ast_hash": "ec4f0ae290c0ba4883784a73af39c50b",
+    "semantic_hash": "ec4f0ae290c0ba4883784a73af39c50b"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/utils/__init__.py": {
+    "mtime": 1781114279.6800559,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/utils/auth.py": {
+    "mtime": 1781017312.8624442,
+    "ast_hash": "242da7d9b40b421edea8b415b62b839a",
+    "semantic_hash": "242da7d9b40b421edea8b415b62b839a"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/utils/graph.py": {
+    "mtime": 1781023901.1665163,
+    "ast_hash": "2e3b09753e9aadbd5e27e4aec99cdaae",
+    "semantic_hash": "2e3b09753e9aadbd5e27e4aec99cdaae"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/utils/sanitization.py": {
+    "mtime": 1780860423.2660244,
+    "ast_hash": "113073114c0cb2430e63589706ceac7f",
+    "semantic_hash": "113073114c0cb2430e63589706ceac7f"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/examples/logging_demo.py": {
+    "mtime": 1780861353.6466732,
+    "ast_hash": "3e7244dfd2021c72666a8be15e4f8c83",
+    "semantic_hash": "3e7244dfd2021c72666a8be15e4f8c83"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/main.py": {
+    "mtime": 1780860810.542866,
+    "ast_hash": "f3a0ec5c7b9755b26f0431bf82e7edab",
+    "semantic_hash": "f3a0ec5c7b9755b26f0431bf82e7edab"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/skills-lock.json": {
+    "mtime": 1781023138.5417855,
+    "ast_hash": "64303c52714482dfbe93cc3791b54610",
+    "semantic_hash": "64303c52714482dfbe93cc3791b54610"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/start.sh": {
+    "mtime": 1780938989.6301155,
+    "ast_hash": "3f0ef204f6dc2fb82a62060500356dc5",
+    "semantic_hash": "3f0ef204f6dc2fb82a62060500356dc5"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/test_pydantic.py": {
+    "mtime": 1780852478.1895483,
+    "ast_hash": "ac33995e111c73e0b1a9b0cbfbb444f1",
+    "semantic_hash": "ac33995e111c73e0b1a9b0cbfbb444f1"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.agents/skills/find-skills/SKILL.md": {
+    "mtime": 1781023138.5407343,
+    "ast_hash": "efcaee1dd97ebac4f2f4071585cff6b5",
+    "semantic_hash": "efcaee1dd97ebac4f2f4071585cff6b5"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/CLAUDE.md": {
+    "mtime": 1781347826.8391068,
+    "ast_hash": "db73b0edd7ffbc61ceac177130730865",
+    "semantic_hash": "db73b0edd7ffbc61ceac177130730865"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/SKILL.md": {
+    "mtime": 1781347826.838998,
+    "ast_hash": "97c2755905a5a0e53b96b31c725a7010",
+    "semantic_hash": "97c2755905a5a0e53b96b31c725a7010"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/add-watch.md": {
+    "mtime": 1781347611.8323896,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/exports.md": {
+    "mtime": 1781347611.8323896,
+    "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/extraction-spec.md": {
+    "mtime": 1781347611.8323896,
+    "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/github-and-merge.md": {
+    "mtime": 1781347611.8323896,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/hooks.md": {
+    "mtime": 1781347611.8323896,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/query.md": {
+    "mtime": 1781347611.8343897,
+    "ast_hash": "8b40ed8c9e9060fc215219a8fc964091",
+    "semantic_hash": "8b40ed8c9e9060fc215219a8fc964091"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/transcribe.md": {
+    "mtime": 1781347611.8343897,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.claude/skills/graphify/references/update.md": {
+    "mtime": 1781347611.8343897,
+    "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.github/copilot-instructions.md": {
+    "mtime": 1780857765.259055,
+    "ast_hash": "e240b1b03fffc632dc6b39652a75029a",
+    "semantic_hash": "e240b1b03fffc632dc6b39652a75029a"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/SKILL.md": {
+    "mtime": 1781347847.0346837,
+    "ast_hash": "edf0f19d2d512df1463ac70aaa5e02a6",
+    "semantic_hash": "edf0f19d2d512df1463ac70aaa5e02a6"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/add-watch.md": {
+    "mtime": 1781347611.897391,
+    "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
+    "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/exports.md": {
+    "mtime": 1781347611.897391,
+    "ast_hash": "c04ddf8f1f5ef5e262ebec491a523c74",
+    "semantic_hash": "c04ddf8f1f5ef5e262ebec491a523c74"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/extraction-spec.md": {
+    "mtime": 1781347611.9063911,
+    "ast_hash": "24808b03abfeaf5f6435bb69c0125b2c",
+    "semantic_hash": "24808b03abfeaf5f6435bb69c0125b2c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/github-and-merge.md": {
+    "mtime": 1781347611.9063911,
+    "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
+    "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/hooks.md": {
+    "mtime": 1781347611.9073913,
+    "ast_hash": "3f545db6ce646650bb9de588f5512a27",
+    "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/query.md": {
+    "mtime": 1781347611.9073913,
+    "ast_hash": "c2a8e798674a81b02aa9975f43023819",
+    "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/transcribe.md": {
+    "mtime": 1781347611.9073913,
+    "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
+    "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/.opencode/skills/graphify/references/update.md": {
+    "mtime": 1781347611.9073913,
+    "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
+    "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/AGENTS.md": {
+    "mtime": 1781347847.0348568,
+    "ast_hash": "4f2c0f4fe887eb9367dc0ad0e6eac015",
+    "semantic_hash": "4f2c0f4fe887eb9367dc0ad0e6eac015"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/CLAUDE.md": {
+    "mtime": 1781347826.8392391,
+    "ast_hash": "82efb97a359f5c7290bf2513d14686be",
+    "semantic_hash": "82efb97a359f5c7290bf2513d14686be"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/README.md": {
+    "mtime": 1781122324.297346,
+    "ast_hash": "5895e0ea8543088e007aa63b5977df4b",
+    "semantic_hash": "5895e0ea8543088e007aa63b5977df4b"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/app/core/prompts/system.md": {
+    "mtime": 1781112422.6085732,
+    "ast_hash": "206ddfa8826a2823835d1a7c118a4a66",
+    "semantic_hash": "206ddfa8826a2823835d1a7c118a4a66"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/docker-compose.yml": {
+    "mtime": 1781029238.4224215,
+    "ast_hash": "0bec2cb16b47911f73e024cbc3e420d2",
+    "semantic_hash": "0bec2cb16b47911f73e024cbc3e420d2"
+  },
+  "/home/rounak/Desktop/Projects/prod-agentic-practice/skills.md": {
+    "mtime": 1780938994.9982457,
+    "ast_hash": "030e29937c1048bd433032c6254a9f1c",
+    "semantic_hash": "030e29937c1048bd433032c6254a9f1c"
+  }
+}

@@ -199,12 +199,12 @@ Key methods:
 
 ### LLM Unavailability Handling
 
-`LLMRegistry` in `app/services/llm.py` registers primary and backup models via `ChatOpenRouter`. The `LLMService` resilience layer combines two strategies:
+`LLMRegistry` in `app/services/llm.py` registers primary and backup models via `ChatOpenAI` pointed at any OpenAI-compatible API. The `LLMService` resilience layer combines two strategies:
 
 1. **Tenacity retry** — each LLM call retries up to `MAX_LLM_CALL_RETRIES` times with exponential backoff (2s, 4s, 8s...). Catches rate limits, timeouts, connection drops, and 5xx errors.
 2. **Model fallback** — if retries are exhausted for one model, `LLMService` switches to the next registered model and retries from scratch. Fails only after all models are exhausted.
 
-This means a transient OpenRouter hiccup is absorbed by retries, while a model-specific outage triggers automatic fallback to the backup model (e.g. DeepSeek → Ling 2.6 Flash).
+This means a transient provider hiccup is absorbed by retries, while a model-specific outage triggers automatic fallback to the backup model (e.g. primary → fallback).
 
 ### Circuit Breaking
 
@@ -277,9 +277,9 @@ The resulting trace hierarchy per request:
 ```
 Span: "GET /chat" (middleware)              ← root
   ├─ Span: "memory_search"                  ← manual
-  ├─ Generation: "openrouter-..."           ← auto (CallbackHandler)
+  ├─ Generation: "{model_name}"             ← auto (CallbackHandler)
   ├─ Span: "tool_call:duckduckgo_search"    ← manual (per tool)
-  ├─ Generation: "openrouter-..."           ← auto (2nd LLM call)
+  ├─ Generation: "{model_name}"             ← auto (2nd LLM call)
   └─ (fire-and-forget)
        Trace: "memory_add" (session=X)      ← standalone, linked by session_id
 ```
@@ -333,4 +333,4 @@ The application uses FastAPI's async lifecycle (`lifespan` context manager) and 
 
 
 
-Built with FastAPI, LangChain/LangGraph, SQLModel, OpenRouter, Langfuse, Prometheus/Grafana.
+Built with FastAPI, LangChain/LangGraph, SQLModel, OpenAI-compatible LLMs, Langfuse, Prometheus/Grafana.

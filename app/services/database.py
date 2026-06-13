@@ -99,7 +99,7 @@ class DatabaseService:
             )
             return session.exec(statement).all()
 
-    async def get_session(self, session_id: int) -> Optional[ChatSession]:
+    async def get_session(self, session_id: str) -> Optional[ChatSession]:
         """Fetch a single session by ID."""
         with Session(self.engine) as session:
             statement = select(ChatSession).where(ChatSession.id == session_id)

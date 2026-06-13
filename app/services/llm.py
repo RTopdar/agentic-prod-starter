@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import BaseMessage
-from langchain_openrouter import ChatOpenRouter
+from langchain_openai import ChatOpenAI
 from openai import (
     APIError,
     APIConnectionError,
@@ -26,18 +26,20 @@ class LLMRegistry:
     LLMS: List[Dict[str, Any]] = [
         {
             "name": f"{settings.openrouter_model}",
-            "llm": ChatOpenRouter(
+            "llm": ChatOpenAI(
                 model=settings.openrouter_model,
                 temperature=0.7,
-                openai_api_key=settings.openrouter_api_key,
+                api_key=settings.openrouter_api_key,
+                base_url=settings.openrouter_base_url,
             ),
         },
         {
             "name": f"{settings.openrouter_backup_model}",
-            "llm": ChatOpenRouter(
+            "llm": ChatOpenAI(
                 model=settings.openrouter_backup_model,
                 temperature=0.7,
-                openai_api_key=settings.openrouter_api_key,
+                api_key=settings.openrouter_api_key,
+                base_url=settings.openrouter_base_url,
             ),
         },
     ]

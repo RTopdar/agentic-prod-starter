@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from dotenv import load_dotenv
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -149,6 +149,8 @@ class Settings(BaseSettings):
     rate_limit_chat_stream: str = Field(..., alias="RATE_LIMIT_CHAT_STREAM")
     rate_limit_messages: str = Field(..., alias="RATE_LIMIT_MESSAGES")
     rate_limit_login: str = Field(..., alias="RATE_LIMIT_LOGIN")
+    rate_limit_register: str = Field(..., alias="RATE_LIMIT_REGISTER")
+    rate_limit: dict[str, str] = Field(default_factory=dict)
 
     # ------------------------------------------------------------------------
     # LLM Retry Configuration
@@ -226,6 +228,18 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return int(v)
         return v
+
+    @model_validator(mode="after")
+    def assemble_rate_limit_dict(self) -> "Settings":
+        self.rate_limit = {
+            "default": self.rate_limit_default,
+            "chat": self.rate_limit_chat,
+            "chat_stream": self.rate_limit_chat_stream,
+            "messages": self.rate_limit_messages,
+            "login": self.rate_limit_login,
+            "register": self.rate_limit_register,
+        }
+        return self
 
     # ------------------------------------------------------------------------
     # Pydantic Configuration

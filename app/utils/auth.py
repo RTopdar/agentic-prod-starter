@@ -44,6 +44,92 @@ def _load_public_key() -> str:
 # ============================================================================
 # Token Creation
 # ============================================================================
+def create_access_token(
+    subject: str,
+    data: Optional[Dict[str, Any]] = None,
+    expire_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES,
+) -> Token:
+    """
+    Create an access token for a subject.
+
+    Args:
+        subject: The subject identifier (typically user ID or session ID)
+        data: Additional claims to include in the token payload
+        expire_minutes: Access token expiration in minutes
+
+    Returns:
+        Token object with access_token set and refresh_token as empty string
+
+    Raises:
+        FileNotFoundError: If private key file is missing
+        JWTError: If token encoding fails
+    """
+    private_key = _load_private_key()
+    now = datetime.now(UTC)
+    expires_at = now + timedelta(minutes=expire_minutes)
+
+    payload = {
+        "sub": subject,
+        "type": "access",
+        "iat": now,
+        "exp": expires_at,
+    }
+    if data:
+        payload.update(data)
+
+    access_token = jwt.encode(payload, private_key, algorithm=settings.jwt_algorithm)
+
+    return Token(
+        access_token=access_token,
+        refresh_token="",
+        token_type="bearer",
+        expires_at=expires_at,
+    )
+
+
+def create_refresh_token(
+    subject: str,
+    data: Optional[Dict[str, Any]] = None,
+    expire_days: int = REFRESH_TOKEN_EXPIRE_DAYS,
+) -> Token:
+    """
+    Create a refresh token for a subject.
+
+    Args:
+        subject: The subject identifier (typically user ID)
+        data: Additional claims to include in the token payload
+        expire_days: Refresh token expiration in days
+
+    Returns:
+        Token object with refresh_token set and access_token as empty string
+
+    Raises:
+        FileNotFoundError: If private key file is missing
+        JWTError: If token encoding fails
+    """
+    private_key = _load_private_key()
+    now = datetime.now(UTC)
+    expires_at = now + timedelta(days=expire_days)
+
+    payload = {
+        "sub": subject,
+        "type": "refresh",
+        "iat": now,
+        "exp": expires_at,
+    }
+    if data:
+        payload.update(data)
+
+    refresh_token = jwt.encode(payload, private_key, algorithm=settings.jwt_algorithm)
+
+    return Token(
+        access_token="",
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_at=expires_at,
+    )
+
+
 def create_tokens(
     subject: str,
     data: Optional[Dict[str, Any]] = None,
@@ -66,49 +152,14 @@ def create_tokens(
         FileNotFoundError: If private key file is missing
         JWTError: If token encoding fails
     """
-    # Load private key
-    private_key = _load_private_key()
-
-    # Prepare base claims
-    now = datetime.now(UTC)
-
-    # Create access token
-    access_token_expires = now + timedelta(minutes=access_token_expire_minutes)
-    access_token_payload = {
-        "sub": subject,
-        "type": "access",
-        "iat": now,
-        "exp": access_token_expires,
-    }
-    if data:
-        access_token_payload.update(data)
-
-    access_token = jwt.encode(
-        access_token_payload,
-        private_key,
-        algorithm=settings.jwt_algorithm,
-    )
-
-    # Create refresh token
-    refresh_token_expires = now + timedelta(days=refresh_token_expire_days)
-    refresh_token_payload = {
-        "sub": subject,
-        "type": "refresh",
-        "iat": now,
-        "exp": refresh_token_expires,
-    }
-
-    refresh_token = jwt.encode(
-        refresh_token_payload,
-        private_key,
-        algorithm=settings.jwt_algorithm,
-    )
+    access = create_access_token(subject, data, access_token_expire_minutes)
+    refresh = create_refresh_token(subject, data, refresh_token_expire_days)
 
     return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
+        access_token=access.access_token,
+        refresh_token=refresh.refresh_token,
         token_type="bearer",
-        expires_at=access_token_expires,
+        expires_at=access.expires_at,
     )
 
 
@@ -211,38 +262,18 @@ def refresh_access_token(refresh_token: str) -> Token:
     Raises:
         JWTError: If refresh token verification fails
     """
-    # Verify refresh token
     payload = verify_refresh_token(refresh_token)
-
-    # Extract subject and any additional data from refresh token
     subject = payload["sub"]
 
-    # Create new access token (keep same expiration as default)
-    private_key = _load_private_key()
-    now = datetime.now(UTC)
-    access_token_expires = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    access_token_payload = {
-        "sub": subject,
-        "type": "access",
-        "iat": now,
-        "exp": access_token_expires,
-    }
-
-    # Copy any additional claims from refresh token (except type, iat, exp)
+    data = {}
     for key, value in payload.items():
         if key not in ["type", "iat", "exp"]:
-            access_token_payload[key] = value
+            data[key] = value
 
-    access_token = jwt.encode(
-        access_token_payload,
-        private_key,
-        algorithm=settings.jwt_algorithm,
-    )
-
+    access = create_access_token(subject, data=data)
     return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,  # Keep same refresh token
+        access_token=access.access_token,
+        refresh_token=refresh_token,
         token_type="bearer",
-        expires_at=access_token_expires,
+        expires_at=access.expires_at,
     )

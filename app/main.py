@@ -22,6 +22,7 @@ from app.core.langfuse import (
     shutdown_langfuse,
 )
 from app.core.logging import logger, log_request_response
+from app.api.v1.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -63,6 +64,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register API routes
+app.include_router(auth_router, prefix="/api/v1")
 
 
 # Add structured logging middleware

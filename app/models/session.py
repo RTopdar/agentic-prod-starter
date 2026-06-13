@@ -11,7 +11,7 @@ class Session(BaseModel, table=True):
     Represents a user session in the system, linked to a specific user.
     """
 
-    id: int = Field(default=None, primary_key=True)
+    id: str = Field(default=None, primary_key=True)
 
     # Foreign key to the User table
     user_id: int = Field(foreign_key="user.id")

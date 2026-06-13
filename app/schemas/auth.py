@@ -56,3 +56,22 @@ class UserResponse(BaseModel):
     id: int
     email: str
     token: Token
+
+
+class SessionResponse(BaseModel):
+    """
+    Schema for returning user session information.
+    """
+
+    session_id: str
+    name: str
+    token: Token
+
+
+class TokenResponse(BaseModel):
+    """
+    Schema for returning access token information.
+    """
+
+    token: Token
+    message: str = Field(default="Login successful", description="Response message")
