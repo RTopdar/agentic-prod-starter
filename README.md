@@ -77,6 +77,23 @@ pytest
 
 ---
 
+## Codebase Knowledge Graph
+
+This project has a persistent knowledge graph built with [graphify](https://github.com/safishamsi/graphify). After running `/graphify` (triggered via `AGENTS.md`), the graph lives in `graphify-out/` and includes:
+
+| Output | Purpose |
+| ------ | ------- |
+| `graph.html` | Interactive visualization — open in any browser |
+| `GRAPH_REPORT.md` | Plain-language audit with god nodes, community detection, and surprising connections |
+| `graph.json` | GraphRAG-ready raw data |
+| `cost.json` | Token usage across runs |
+
+**When exploring the codebase**, use `graphify query "<question>"` instead of grepping raw files — it returns a scoped subgraph via BFS/DFS traversal and cites `source_location` for every fact. For relationships between two concepts, run `graphify path "ConceptA" "ConceptB"`.
+
+The graph is rebuilt incrementally (`--update`) and automatically excludes `.env`, `.pem`, and other sensitive files. See `graphify-out/GRAPH_REPORT.md` for extracted entities, inferred connections, and cross-community bridges.
+
+---
+
 ## Creating Modular Codebase
 
 ### Managing Dependencies
