@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 # Copy pyproject.toml first to leverage Docker cache
 # If dependencies haven't changed, Docker skips this step!
 COPY pyproject.toml .
-RUN uv venv && . .venv/bin/activate && uv pip install -e .
+RUN uv sync
 
 # Copy the application source code
 COPY . .

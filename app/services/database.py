@@ -26,7 +26,7 @@ class DatabaseService:
         try:
             # Create the connection URL from settings
             connection_url = (
-                f"postgresql://{settings.postgres_user}:{settings.postgres_password}"
+                f"postgresql+psycopg://{settings.postgres_user}:{settings.postgres_password}"
                 f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
             )
             # Configuring the QueuePool is critical for production.

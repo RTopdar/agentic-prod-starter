@@ -35,7 +35,7 @@ class LangGraphAgent:
         self._connection_pool: Optional[AsyncConnectionPool] = None
         self._graph: Optional[CompiledStateGraph] = None
         self.memory: Optional[AsyncMemory] = None
-        logger.info("langgraph_agent_initialized", model=settings.DEFAULT_LLM_MODEL)
+        logger.info("langgraph_agent_initialized", model=settings.openrouter_model)
 
     async def _long_term_memory(self) -> AsyncMemory:
         """
@@ -48,20 +48,26 @@ class LangGraphAgent:
                         "provider": "pgvector",
                         "config": {
                             "collection_name": "agent_memory",
-                            "dbname": settings.POSTGRES_DB,
-                            "user": settings.POSTGRES_USER,
-                            "password": settings.POSTGRES_PASSWORD,
-                            "host": settings.POSTGRES_HOST,
-                            "port": settings.POSTGRES_PORT,
+                            "dbname": settings.postgres_db,
+                            "user": settings.postgres_user,
+                            "password": settings.postgres_password,
+                            "host": settings.postgres_host,
+                            "port": settings.postgres_port,
                         },
                     },
                     "llm": {
                         "provider": "openai",
-                        "config": {"model": settings.DEFAULT_LLM_MODEL},
+                        "config": {
+                            "model": settings.openrouter_model,
+                            "openai_base_url": settings.openrouter_base_url,
+                        },
                     },
                     "embedder": {
                         "provider": "openai",
-                        "config": {"model": "text-embedding-3-small"},
+                        "config": {
+                            "model": settings.openrouter_embedding_model,
+                            "openai_base_url": settings.openrouter_base_url,
+                        },
                     },
                 }
             )
@@ -74,13 +80,13 @@ class LangGraphAgent:
         if self._connection_pool is None:
             connection_url = (
                 "postgresql://"
-                f"{quote_plus(settings.POSTGRES_USER)}:{quote_plus(settings.POSTGRES_PASSWORD)}"
-                f"@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+                f"{quote_plus(settings.postgres_user)}:{quote_plus(settings.postgres_password)}"
+                f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
             )
             self._connection_pool = AsyncConnectionPool(
                 connection_url,
                 open=False,
-                max_size=settings.POSTGRES_POOL_SIZE,
+                max_size=settings.postgres_pool_size,
                 kwargs={"autocommit": True},
             )
             await self._connection_pool.open()

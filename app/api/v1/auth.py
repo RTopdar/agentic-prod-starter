@@ -12,6 +12,7 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
+from jose.exceptions import JWTError
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging import bind_context, logger
@@ -53,7 +54,15 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user_id = int(user_id_str)
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         user = await database_service.get_user_by_id(user_id)
 
         if user is None:
@@ -74,6 +83,12 @@ async def get_current_user(
             detail="Invalid token format",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except JWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def get_current_session(
@@ -88,9 +103,9 @@ async def get_current_session(
         token = sanitize_string(credentials.credentials)
 
         payload = verify_token(token)
-        session_id = payload.get("sub")
+        session_id = payload.get("session_id")
         if session_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(status_code=401, detail="Invalid session token")
 
         session = await database_service.get_session(session_id)
         if session is None:
@@ -176,7 +191,7 @@ async def login(
         token = create_tokens(str(user.id))
 
         logger.info("user_logged_in", user_id=user.id)
-        return TokenResponse(token)
+        return TokenResponse(token=token)
     except ValueError as ve:
         raise HTTPException(status_code=422, detail=str(ve))
 
@@ -192,9 +207,9 @@ async def create_session(user: User = Depends(get_current_user)):
 
         # Persist to DB
         session = await database_service.create_session(session_id, user.id)
-        # Create a token specifically for this session ID
-        # This token allows the Chatbot API to identify which thread to write to
-        token = create_access_token(session_id)
+        # Create a token with user_id in `sub` (so get_current_user passes)
+        # and session_id in a custom claim for get_current_session to use
+        token = create_access_token(str(user.id), data={"session_id": session_id})
         logger.info("session_created", session_id=session_id, user_id=user.id)
         return SessionResponse(session_id=session_id, name=session.name, token=token)
 
@@ -213,8 +228,8 @@ async def get_user_sessions(user: User = Depends(get_current_user)):
         SessionResponse(
             session_id=s.id,
             name=s.name,
-            # We re-issue tokens so the UI can resume these chats
-            token=create_access_token(s.id),
+            # Re-issue with user_id in sub and session_id in a custom claim
+            token=create_access_token(str(user.id), data={"session_id": s.id}),
         )
         for s in sessions
     ]

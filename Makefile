@@ -1,4 +1,4 @@
-.PHONY: help install dev docker-up docker-down test lint format clean logs psql generate-jwt-keys
+.PHONY: help install dev docker-up docker-down test lint format clean logs eval psql generate-jwt-keys
 
 help:           ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -44,6 +44,9 @@ clean:          ## Remove Python cache and artifacts
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
 	rm -rf .ruff_cache .pytest_cache
+
+eval:           ## Run AI evaluation once
+	uv run python -m evals.main
 
 psql:           ## Connect to the PostgreSQL database
 	@read -p "User: " u; read -p "Database: " d; \
