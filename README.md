@@ -49,30 +49,35 @@ A production-grade reference template for building agentic AI systems with FastA
 
 ```bash
 # 1. Clone and install dependencies
-uv sync
+make install
 
 # 2. Copy environment configuration
 cp .env.example .env.dev
 # Edit .env.dev with your API keys
 
-# 3. Start infrastructure (PostgreSQL, Prometheus, Grafana)
-docker-compose up -d
+# 3. Generate JWT keys (required for auth endpoints)
+make generate-jwt-keys
+
+# 4. Start infrastructure (PostgreSQL, Prometheus, Grafana, cAdvisor)
+make docker-up
 
 # (Optional) Start Langfuse — locally in background or use Langfuse Cloud
 # Update LANGFUSE_BASE_URL in .env.dev accordingly
 
-# 4. Run the FastAPI server
-uvicorn app.main:app --reload
+# 5. Run the FastAPI server
+make dev
 
-# 5. Verify
+# 6. Verify
 curl http://localhost:8000/health
 ```
 
 ## Lint / Test
 
 ```bash
-ruff check app/ && ruff format --check app/
-pytest
+make lint       # ruff check
+make format     # ruff format
+make check      # both (CI gate)
+make test       # pytest
 ```
 
 ---
@@ -114,20 +119,38 @@ Environment-specific `.env` files are loaded by `app/core/config.py` via Pydanti
 
 ### Containerization Strategy
 
-`docker-compose.yml` orchestrates the core stack. Langfuse (LLM observability) runs externally — either locally in the background or cloud-hosted — configured via `LANGFUSE_*` env vars.
+`docker-compose.yml` orchestrates the core stack. The `Dockerfile` uses a multi-stage build with a security-hardened entrypoint at `scripts/docker-entrypoint.sh` that validates required secrets (`OPENROUTER_API_KEY`, `POSTGRES_PASSWORD`, `LANGFUSE_*` keys, JWT key files) before the app starts — fail-fast on missing config.
 
-| Service   | Container             | Port  | In docker-compose |
-| --------- | --------------------- | ----- | ----------------- |
-| App       | FastAPI (Uvicorn)     | 8000  | Yes               |
-| Database  | PostgreSQL + pgvector | 5432  | Yes               |
-| Metrics   | Prometheus            | 9090  | Yes               |
-| Viz       | Grafana               | 3001  | Yes               |
-| Container | cAdvisor              | 8080  | Yes               |
-| LLM Obs   | Langfuse              | 3000  | External          |
+Langfuse (LLM observability) runs externally — either locally in the background or cloud-hosted — configured via `LANGFUSE_*` env vars.
+
+| Service   | Container             | Port  | Config                                      |
+| --------- | --------------------- | ----- | ------------------------------------------- |
+| App       | FastAPI (Uvicorn)     | 8000  | `Dockerfile`, `scripts/docker-entrypoint.sh`|
+| Database  | PostgreSQL + pgvector | 5432  | `.env.{APP_ENV}`                            |
+| Metrics   | Prometheus            | 9090  | `prometheus/prometheus.yml`                 |
+| Viz       | Grafana               | 3001  | `grafana/dashboards/`                       |
+| Container | cAdvisor              | 8080  | —                                           |
+| LLM Obs   | Langfuse              | 3000  | External                                     |
 
 Start core services with `docker-compose up -d`. Start Langfuse separately (e.g. `docker compose -f docker-compose.langfuse.yml up -d` or use Langfuse Cloud).
 
-Start everything with `docker-compose up -d`.
+### Makefile
+
+A `Makefile` at the project root provides common commands:
+
+| Target              | Purpose                                |
+| ------------------- | -------------------------------------- |
+| `make install`      | Install all deps (main + dev + test)   |
+| `make dev`          | Run FastAPI with hot-reload            |
+| `make docker-up`    | Start all containers                   |
+| `make docker-down`  | Stop containers                        |
+| `make lint`         | Ruff linter check                      |
+| `make format`       | Ruff auto-format                       |
+| `make check`        | Lint + format check (CI gate)          |
+| `make test`         | Run pytest                             |
+| `make generate-jwt-keys` | Generate RS256 key pair for JWT   |
+| `make psql`         | Interactive psql connection            |
+| `make clean`        | Remove cache and artifacts             |
 
 ---
 
@@ -334,7 +357,11 @@ The application uses FastAPI's async lifecycle (`lifespan` context manager) and 
 
 ### DevOps Automation
 
+- `scripts/docker-entrypoint.sh` — entrypoint script that validates required secrets before the app starts, with instructive error messages and copy-paste fix commands.
+- `Dockerfile` — slim Python 3.13 image with `uv` for fast dependency install, non-root user, and the entrypoint wired as `ENTRYPOINT`.
 - `docker-compose.yml` includes health checks, restart policies, and volume management for all services.
+- `prometheus/prometheus.yml` — Prometheus scrape config targeting FastAPI (`/metrics`) and cAdvisor (`:8080`).
+- `Makefile` — convenience targets for install, dev, docker, test, lint, and JWT key generation.
 - `start.sh` is deprecated — use `docker-compose up -d` instead.
 
 ---
