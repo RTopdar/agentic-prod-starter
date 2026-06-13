@@ -37,7 +37,7 @@ def prepare_messages(
             include_system=False,  # We append system prompt manually below
             allow_partial=False,
         )
-    except Exception as e:
+    except Exception:
         # Fallback if token counting fails (rare, but safety first)
         trimmed_messages = messages
     # Always prepend the system prompt to enforce agent behavior

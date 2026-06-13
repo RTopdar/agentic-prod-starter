@@ -23,7 +23,7 @@ from app.schemas.auth import (
     UserCreate,
     UserResponse,
 )
-from app.services.database import DatabaseService, database_service
+from app.services.database import database_service
 from app.utils.auth import create_access_token, create_tokens, verify_token
 from app.utils.sanitization import (
     sanitize_email,
@@ -110,7 +110,7 @@ async def get_current_session(
 
         bind_context(user_id=session.user_id, session_id=session.id)
         return session
-    except ValueError as ve:
+    except ValueError:
         raise HTTPException(status_code=422, detail="Invalid token format")
 
 

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.pool import QueuePool
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -104,6 +104,18 @@ class DatabaseService:
         with Session(self.engine) as session:
             statement = select(ChatSession).where(ChatSession.id == session_id)
             return session.exec(statement).first()
+
+    # --------------------------------------------------
+    # Health Check
+    # --------------------------------------------------
+    async def health_check(self) -> bool:
+        """Verify database connectivity."""
+        try:
+            with Session(self.engine) as session:
+                session.exec(text("SELECT 1"))
+                return True
+        except SQLAlchemyError:
+            return False
 
 
 # Create a global singleton instance

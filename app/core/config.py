@@ -8,7 +8,7 @@ Loads environment variables from .env files with environment-specific overrides.
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional
 
 from dotenv import load_dotenv
 from pydantic import Field, field_validator, model_validator

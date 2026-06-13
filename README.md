@@ -241,17 +241,38 @@ System prompts live in `app/core/prompts/` as markdown templates with `{variable
 
 ### Auth Endpoints
 
-`app/api/v1/auth.py` defines two FastAPI dependency functions used for protected routes:
+`app/api/v1/auth.py` defines 4 endpoints and 2 FastAPI dependency functions used for protected routes:
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/auth/register` | POST | None | Register user with zxcvbn password validation |
+| `/auth/login` | POST | None | Authenticate and return JWT token pair |
+| `/auth/session` | POST | Bearer token | Create a new chat session |
+| `/auth/sessions` | GET | Bearer token | List all historical sessions for the user |
+
+**Dependencies:**
+
 - **`get_current_user`** — validates the JWT access token, extracts user ID from `sub` claim, and verifies the user exists via `get_user_by_id()`
 - **`get_current_session`** — validates a session-specific JWT token, fetches the session via `get_session()`, and verifies it belongs to the authenticated user (returns 403 on mismatch)
 
-Schema-level password validation uses `zxcvbn` (score ≥ 3 required) with contextual feedback.
+Schema-level password validation uses `zxcvbn` (score ≥ 3 required) with contextual feedback. Routes are wired under the `/api/v1/auth` prefix via `app.include_router`. Code/test infrastructure and refresh-token rotation are planned extensions.
 
-> **Route handlers are stubbed.** Schemas (`UserCreate`, `Token`, `UserResponse`) and utils (`create_tokens`, `verify_token`, `refresh_access_token`) are implemented, but login/register/refresh endpoints are not yet wired.
+### Chat Endpoints
+
+`app/api/v1/chat.py` implements 4 endpoints for conversational AI:
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/chatbot/chat` | POST | Session token | Standard request/response chat via LangGraph agent |
+| `/chatbot/chat/stream` | POST | Session token | Server-Sent Events (SSE) streaming chat |
+| `/chatbot/messages` | GET | Session token | Retrieve full conversation history for a session |
+| `/chatbot/messages` | DELETE | Session token | Clear (hard delete) session conversation history |
+
+The `POST /chat` endpoint delegates to `LangGraphAgent.get_response()`, which runs the full StateGraph workflow. `POST /chat/stream` returns a `StreamingResponse` with SSE-formatted chunks (`data: {"content": "...", "done": false}\n\n`), terminated by a `"done": true` signal.
 
 ### Real-Time Streaming
 
-> **Stubbed.** `StreamResponse` schema and SSE chunk format are defined. Streaming endpoints are planned but not yet implemented.
+The `POST /chatbot/chat/stream` endpoint uses SSE (`text/event-stream`) to stream LLM output character-by-character. The `StreamResponse` schema defines the chunk format with `content` and `done` fields. The LangGraph agent's `get_stream_response()` async generator feeds the stream. Error handling within the stream yields an error chunk before terminating.
 
 ---
 
@@ -259,9 +280,20 @@ Schema-level password validation uses `zxcvbn` (score ≥ 3 required) with conte
 
 ### Creating Metrics to Evaluate
 
-- Prometheus and Grafana are configured in `docker-compose.yml` with provisioning directories (`prometheus/`, `grafana/`).
-- `prometheus-client` is a declared dependency.
-- No custom metrics or dashboards are defined yet.
+Prometheus metrics are defined in `app/core/metrics.py` and wired via `setup_metrics(app)` in `app/main.py`, which exposes the `/metrics` scrape endpoint:
+
+| Metric | Type | Labels | Purpose |
+|---|---|---|---|
+| `http_requests_total` | Counter | method, endpoint, status | Request count per route |
+| `http_request_duration_seconds` | Histogram | method, endpoint | Latency distribution (p50/p95/p99) |
+| `db_connections` | Gauge | — | Active database connections (leak detection) |
+| `llm_inference_duration_seconds` | Histogram | model | LLM inference latency (buckets: 0.1s-30s) |
+| `llm_stream_duration_seconds` | Histogram | model | Streaming LLM latency (buckets: 0.1s-60s) |
+
+- **`MetricsMiddleware`** (`app/core/middleware.py`) auto-records `http_requests_total` and `http_request_duration_seconds` on every request, filtering out `/metrics` and `/health`.
+- **`LoggingContextMiddleware`** (`app/core/middleware.py`) extracts User/Session IDs from JWT tokens before routing and binds them to structlog context. Both middleware are registered in `app/main.py`.
+- Prometheus, Grafana, and cAdvisor are configured in `docker-compose.yml` with provisioning directory mounts.
+- Grafana dashboards are planned but not yet provisioned.
 
 ### Langfuse Tracing (LLM Observability)
 

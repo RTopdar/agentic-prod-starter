@@ -1,19 +1,18 @@
 import asyncio
-from typing import AsyncGenerator, Optional
+from typing import Optional
 from urllib.parse import quote_plus
-from asgiref.sync import sync_to_async
 
 from langchain_core.messages import ToolMessage, convert_to_openai_messages
 from langfuse.langchain import CallbackHandler
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import Command, CompiledStateGraph
-from langgraph.types import RunnableConfig, StateSnapshot
+from langgraph.types import RunnableConfig
 
 from mem0 import AsyncMemory
 
 from psycopg_pool import AsyncConnectionPool
-from app.core.config import Environment, settings
+from app.core.config import settings
 from app.core.langfuse import get_langfuse_client
 from app.core.langgraph.tools import tools
 from app.core.logging import logger

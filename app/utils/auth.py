@@ -1,4 +1,3 @@
-import re
 from datetime import UTC, datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
@@ -6,8 +5,6 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.schemas.auth import Token
-from app.utils.sanitization import sanitize_string
-from app.core.logging import logger
 
 # ============================================================================
 # Token Configuration

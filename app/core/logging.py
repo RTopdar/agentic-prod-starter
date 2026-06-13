@@ -9,11 +9,12 @@ This module provides a comprehensive logging setup with:
 - Integration with FastAPI and async context
 """
 
+import contextvars
 import logging
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 import structlog
@@ -108,6 +109,7 @@ def configure_logging() -> None:
         add_service_name,
         add_version,
         add_environment,
+        add_request_context,
         filter_log_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
@@ -170,6 +172,40 @@ def get_logger(name: Optional[str] = None) -> structlog.stdlib.BoundLogger:
 # ============================================================================
 # Context Management
 # ============================================================================
+
+# Thread-safe per-request context storage
+_request_context: contextvars.ContextVar[Dict[str, Any]] = contextvars.ContextVar(
+    "_request_context", default={}
+)
+
+
+def bind_context(**kwargs) -> None:
+    """Bind key-value pairs to the current request context.
+
+    All subsequent log calls within this request will include these key-value pairs.
+    """
+    current = _request_context.get()
+    current.update(kwargs)
+    _request_context.set(current)
+
+
+def clear_context() -> None:
+    """Clear the current request context entirely.
+
+    Must be called at the end of each request to prevent context leaking
+    between requests in async workers.
+    """
+    _request_context.set({})
+
+
+def add_request_context(_: Any, __: Any, event_dict: EventDict) -> EventDict:
+    """Structlog processor that merges request context into every log entry."""
+    ctx = _request_context.get()
+    if ctx:
+        event_dict.update(ctx)
+    return event_dict
+
+
 class LogContext:
     """Context manager for adding context to logs."""
 

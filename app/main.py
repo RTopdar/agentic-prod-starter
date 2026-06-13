@@ -1,62 +1,64 @@
-#!/usr/bin/env python3
-"""
-FastAPI application entry point with structured logging.
-
-This module creates the FastAPI application and integrates
-the structured logging middleware.
-"""
-
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.langfuse import (
+    flush_langfuse,
     get_langfuse_client,
     init_langfuse,
-    flush_langfuse,
     shutdown_langfuse,
 )
 from app.core.logging import logger, log_request_response
-from app.api.v1.auth import router as auth_router
+from app.core.metrics import setup_metrics
+from app.core.middleware import LoggingContextMiddleware, MetricsMiddleware
+from app.services.database import database_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifecycle events."""
-    # Startup
     logger.info(
-        "FastAPI application starting",
+        "application_startup",
+        project_name=settings.project_name,
+        version=settings.version,
+        api_prefix=settings.api_v1_str,
         environment=settings.environment.value,
-        debug=settings.debug,
-        allowed_origins=settings.allowed_origins,
     )
 
     init_langfuse()
 
     yield
 
-    # Shutdown
-    logger.info("FastAPI application shutting down")
+    logger.info("application_shutdown")
     flush_langfuse()
     shutdown_langfuse()
 
 
-# Create FastAPI application
 app = FastAPI(
     title=settings.project_name,
     version=settings.version,
-    description="Production-grade agentic system with structured logging",
-    docs_url="/docs" if settings.is_development else None,
-    redoc_url="/redoc" if settings.is_development else None,
+    description="Production-grade AI Agent API",
+    openapi_url=f"{settings.api_v1_str}/openapi.json",
     lifespan=lifespan,
 )
 
-# Add CORS middleware
+# 1. Prometheus metrics scrape endpoint
+setup_metrics(app)
+
+# 2. Logging context middleware (outermost — binds request context for everything inside)
+app.add_middleware(LoggingContextMiddleware)
+
+# 3. Custom metrics middleware (tracks latency and request count)
+app.add_middleware(MetricsMiddleware)
+
+# 4. CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -65,18 +67,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routes
-app.include_router(auth_router, prefix="/api/v1")
+# 5. API router
+app.include_router(api_router, prefix=settings.api_v1_str)
 
 
-# Add structured logging middleware
 @app.middleware("http")
 async def logging_middleware(request: Request, call_next):
     """Log all HTTP requests and responses."""
     return await log_request_response(request, call_next)
 
 
-# Add Langfuse tracing middleware
 @app.middleware("http")
 async def langfuse_tracing_middleware(request: Request, call_next):
     """Create a Langfuse trace for each HTTP request."""
@@ -103,17 +103,16 @@ async def langfuse_tracing_middleware(request: Request, call_next):
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    """Capture HTTP errors and emit structured logs."""
+    """Capture HTTP errors with structured logging."""
     logger.bind(
         path=request.url.path,
         method=request.method,
         request_id=str(request.headers.get("x-request-id", "unknown")),
         client_ip=request.client.host if request.client else None,
     ).warning(
-        "HTTP exception raised",
+        "http_exception",
         status_code=exc.status_code,
         detail=exc.detail,
-        headers=exc.headers,
     )
     return JSONResponse(
         status_code=exc.status_code,
@@ -124,33 +123,38 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Capture validation errors with field context."""
+    """Format Pydantic validation errors into user-friendly JSON."""
     logger.bind(
         path=request.url.path,
         method=request.method,
         request_id=str(request.headers.get("x-request-id", "unknown")),
         client_ip=request.client.host if request.client else None,
-    ).error(
-        "Request validation failed",
-        errors=exc.errors(),
-        body=exc.model_dump() if hasattr(exc, "model_dump") else None,
+    ).warning(
+        "validation_error",
+        errors=str(exc.errors()),
     )
+
+    formatted_errors = []
+    for error in exc.errors():
+        loc = " -> ".join([str(p) for p in error["loc"] if p != "body"])
+        formatted_errors.append({"field": loc, "message": error["msg"]})
+
     return JSONResponse(
-        status_code=422,
-        content={"error": "Validation error", "detail": exc.errors()},
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": "Validation error", "errors": formatted_errors},
     )
 
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
-    """Capture all unhandled exceptions in one place."""
+    """Catch all unhandled exceptions."""
     logger.bind(
         path=request.url.path,
         method=request.method,
         request_id=str(request.headers.get("x-request-id", "unknown")),
         client_ip=request.client.host if request.client else None,
     ).exception(
-        "Unhandled exception caught by FastAPI exception handler",
+        "unhandled_exception",
         error_type=type(exc).__name__,
         error_message=str(exc),
     )
@@ -163,106 +167,38 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Health check endpoint
+@app.get("/")
+async def root():
+    """Root endpoint for basic connectivity tests."""
+    logger.info("root_endpoint_called")
+    return {
+        "name": settings.project_name,
+        "version": settings.version,
+        "environment": settings.environment.value,
+        "docs_url": "/docs",
+    }
+
+
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
-    """Health check endpoint with detailed logging."""
-    logger.debug("Health check requested")
+    """Production health check — validates API and database connectivity."""
+    db_healthy = await database_service.health_check()
 
-    health_data = {
-        "status": "healthy",
-        "service": settings.project_name,
-        "version": settings.version,
-        "environment": settings.environment.value,
-    }
-
-    logger.info("Health check completed", **health_data)
-    return health_data
-
-
-# Root endpoint
-@app.get("/")
-async def root() -> Dict[str, Any]:
-    """Root endpoint with welcome message."""
-    logger.info("Root endpoint accessed")
-
-    return {
-        "message": f"Welcome to {settings.project_name}",
-        "version": settings.version,
-        "environment": settings.environment.value,
-        "docs": "/docs" if settings.is_development else None,
-        "health": "/health",
-    }
-
-
-# Example protected endpoint
-@app.get("/api/v1/status")
-async def get_status(request: Request) -> Dict[str, Any]:
-    """Example API endpoint with request context logging."""
-    # Log with request context
-    logger.info(
-        "Status endpoint accessed",
-        client_ip=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent"),
+    status_code = (
+        status.HTTP_200_OK if db_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
     )
 
-    return {
-        "status": "operational",
-        "timestamp": "2024-03-15T10:30:00Z",
-        "metrics": {
-            "uptime": "24h",
-            "requests_processed": 1000,
-            "error_rate": 0.01,
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "healthy" if db_healthy else "degraded",
+            "components": {
+                "api": "healthy",
+                "database": "healthy" if db_healthy else "unhealthy",
+            },
+            "timestamp": datetime.now().isoformat(),
         },
-    }
-
-
-# Error handling example
-@app.get("/api/v1/error-example")
-async def error_example():
-    """Example endpoint that demonstrates error logging."""
-    try:
-        # Simulate an error
-        result = 1 / 0
-        return {"result": result}
-    except ZeroDivisionError as e:
-        logger.exception(
-            "Division by zero error occurred",
-            error_type=type(e).__name__,
-            error_message=str(e),
-            exc_info=True,
-        )
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Internal server error", "message": str(e)},
-        )
-
-
-# Log demonstration endpoint
-@app.get("/api/v1/log-demo")
-async def log_demo():
-    """Endpoint to demonstrate different log levels."""
-    logger.debug("Debug message - detailed information for developers")
-    logger.info("Info message - general application flow")
-    logger.warning("Warning message - potential issue detected")
-
-    # Structured logging example
-    logger.info(
-        "Structured log example",
-        user_id=123,
-        action="log_demo",
-        metadata={
-            "endpoint": "/api/v1/log-demo",
-            "timestamp": "2024-03-15T10:30:00Z",
-        },
-        tags=["demo", "logging", "structured"],
     )
-
-    return {
-        "message": "Log demonstration completed",
-        "logs_generated": ["debug", "info", "warning", "structured"],
-        "check_console": "View colorful logs in development mode",
-    }
 
 
 if __name__ == "__main__":
@@ -280,5 +216,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=settings.is_development,
-        log_config=None,  # Use our structlog configuration instead
+        log_config=None,
     )
