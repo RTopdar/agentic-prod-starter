@@ -1,13 +1,18 @@
-# Graph Report - .  (2026-06-13)
+# Graph Report - prod-agentic-practice  (2026-06-13)
 
 ## Corpus Check
-- 0 files · ~0 words
+- 49 files · ~24,603 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 550 nodes · 744 edges · 43 communities (34 shown, 9 thin omitted)
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 69 edges (avg confidence: 0.62)
+- 573 nodes · 780 edges · 45 communities (35 shown, 10 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 70 edges (avg confidence: 0.62)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `f8be792e`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Auth & Database Models|Auth & Database Models]]
@@ -48,6 +53,8 @@
 - [[_COMMUNITY_Prompt Templates|Prompt Templates]]
 - [[_COMMUNITY_Extraction Subagent|Extraction Subagent]]
 - [[_COMMUNITY_Token Benchmark|Token Benchmark]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 44|Community 44]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Session` - 22 edges
@@ -59,7 +66,7 @@
 7. `Graphify Pipeline` - 14 edges
 8. `Settings` - 13 edges
 9. `LangGraphAgent` - 12 edges
-10. `create_access_token()` - 11 edges
+10. `Examples` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Native CLAUDE.md Graphify Integration` --conceptually_related_to--> `Graphify Instructions for Claude`  [INFERRED]
@@ -75,15 +82,16 @@
 
 ## Import Cycles
 - 1-file cycle: `app/main.py -> app/main.py`
+- 1-file cycle: `app/core/langgraph/graph.py -> app/core/langgraph/graph.py`
 
-## Communities (43 total, 9 thin omitted)
+## Communities (45 total, 10 thin omitted)
 
 ### Community 0 - "Auth & Database Models"
 Cohesion: 0.06
 Nodes (54): Request, User, User, ChatSession, HTTPAuthorizationCredentials, HTTPException, BaseModel, Database Models Export. This allows simple imports like: `from app.models.databa (+46 more)
 
 ### Community 1 - "LangGraph & LLM Pipeline"
-Cohesion: 0.05
+Cohesion: 0.06
 Nodes (42): Message, BaseChatModel, BaseMessage, Message, AsyncConnectionPool, AsyncMemory, CallbackHandler, Command (+34 more)
 
 ### Community 2 - "Structured Logging"
@@ -99,8 +107,8 @@ Cohesion: 0.09
 Nodes (31): error_example(), generic_exception_handler(), get_status(), health_check(), http_exception_handler(), langfuse_tracing_middleware(), lifespan(), log_demo() (+23 more)
 
 ### Community 5 - "Agent Behavioral Guidelines"
-Cohesion: 0.10
-Nodes (27): 1. Think Before Coding, 2. Simplicity First, 3. Surgical Changes, 4. Goal-Driven Execution, Anti-Patterns Summary, CLAUDE.md, Customization, Example 1: Drive-by Refactoring (+19 more)
+Cohesion: 0.08
+Nodes (36): 1. Think Before Coding, 1. Think Before Coding, 1. Think Before Coding, 2. Simplicity First, 2. Simplicity First, 2. Simplicity First, 3. Surgical Changes, 3. Surgical Changes (+28 more)
 
 ### Community 6 - "JWT Authentication"
 Cohesion: 0.18
@@ -123,8 +131,8 @@ Cohesion: 0.12
 Nodes (11): Any, BaseSettings, Generate PostgreSQL connection URL., Check if running in development environment., Check if running in production environment., Parse comma-separated string into list of origins., Parse debug flag from string to boolean., Parse integer fields from string. (+3 more)
 
 ### Community 11 - "AGENTS.md Guidelines"
-Cohesion: 0.13
-Nodes (17): 1. Think Before Coding, 3. Surgical Changes, 4. Goal-Driven Execution, AGENTS.md — prod-agentic-practice, Architecture, Auth Routes — Key Details, Behavioral Guidelines, Goal-Driven Execution (+9 more)
+Cohesion: 0.12
+Nodes (18): 1. Think Before Coding, 2. Simplicity First, 3. Surgical Changes, 4. Goal-Driven Execution, AGENTS.md — prod-agentic-practice, Architecture, Auth Routes — Key Details, Behavioral Guidelines (+10 more)
 
 ### Community 12 - "LLM Service Registry"
 Cohesion: 0.15
@@ -194,20 +202,24 @@ Nodes (3): Extraction Subagent Prompt Template, Domain-Aware Whisper Prompt Stra
 Cohesion: 0.67
 Nodes (3): Cross-Repo Graph Merge, GitHub Repository Clone, Monorepo Multi-Service Merge
 
+### Community 43 - "Community 43"
+Cohesion: 0.27
+Nodes (7): Request, BaseHTTPMiddleware, LoggingContextMiddleware, MetricsMiddleware, Middleware to automatically track request duration and status codes., Middleware that extracts User IDs from JWTs *before* the request hits the router, Response
+
 ## Knowledge Gaps
-- **163 isolated node(s):** `$schema`, `plugin`, `@opencode-ai/plugin`, `RequestValidationError`, `Exception` (+158 more)
+- **160 isolated node(s):** `$schema`, `plugin`, `@opencode-ai/plugin`, `RequestValidationError`, `Exception` (+155 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `FastAPI` connect `FastAPI App Entrypoint` to `Auth & Database Models`, `Community 43`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
 - **Why does `Environment` connect `LangGraph & LLM Pipeline` to `Auth & Database Models`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+  _High betweenness centrality (0.067) - this node is a cross-community bridge._
 - **Why does `log_request_response()` connect `Structured Logging` to `FastAPI App Entrypoint`?**
-  _High betweenness centrality (0.064) - this node is a cross-community bridge._
-- **Why does `FastAPI` connect `FastAPI App Entrypoint` to `Auth & Database Models`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Are the 10 inferred relationships involving `Session` (e.g. with `Request` and `User`) actually correct?**
   _`Session` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 11 inferred relationships involving `Environment` (e.g. with `Message` and `User`) actually correct?**

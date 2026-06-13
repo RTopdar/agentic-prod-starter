@@ -10,7 +10,7 @@
     "semantic_hash": "a30a9315b4ba10b5fde2fbc0915deb92"
   },
   ".opencode/plugins/graphify.js": {
-    "mtime": 1781348457.3051863,
+    "mtime": 1781369651.9406185,
     "ast_hash": "64ccd3c03dbfe0980b6095766f5c4e52",
     "semantic_hash": "64ccd3c03dbfe0980b6095766f5c4e52"
   },
@@ -215,8 +215,8 @@
     "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
   },
   "AGENTS.md": {
-    "mtime": 1781368557.3692317,
-    "ast_hash": "6b19641b264649506287a0438c939d1c",
+    "mtime": 1781369983.1209426,
+    "ast_hash": "b9b1ad459a9774e69b03e2e47bd44d06",
     "semantic_hash": ""
   },
   "README.md": {
@@ -238,5 +238,15 @@
     "mtime": 1780938994.9982457,
     "ast_hash": "030e29937c1048bd433032c6254a9f1c",
     "semantic_hash": "030e29937c1048bd433032c6254a9f1c"
+  },
+  "app/core/metrics.py": {
+    "mtime": 1781369820.3096776,
+    "ast_hash": "991469ea79e3771c4cc7d2e9a0c515fc",
+    "semantic_hash": ""
+  },
+  "app/core/middleware.py": {
+    "mtime": 1781370142.8674648,
+    "ast_hash": "7484b6d8c28a4a0ad3637ef83dfa1845",
+    "semantic_hash": ""
   }
 }
