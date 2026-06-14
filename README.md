@@ -71,6 +71,32 @@ make dev
 curl http://localhost:8000/health
 ```
 
+---
+
+## Docker & Environment Variables
+
+### Env file quoting
+
+Docker Compose's `env_file` parser strips inner double quotes from values, so JSON arrays in `.env.dev` get mangled: `["url1","url2"]` becomes `[url1,url2]` (invalid JSON).
+
+`ALLOWED_ORIGINS` is set in both `docker-compose.yml`'s `environment:` block (YAML single-quoted to preserve the value) and `.env.dev`. The `.env.dev` copy is re-parsed by `load_dotenv(override=True)` in `config.py` which handles quotes correctly.
+
+### After changing `.env.dev`
+
+The Dockerfile `COPY . .` bakes `.env.dev` into the image. To pick up changes:
+
+```bash
+make docker-up-build    # rebuild image + start services
+```
+
+Or manually:
+
+```bash
+docker compose build app && docker compose up -d app
+```
+
+---
+
 ## Lint / Test
 
 ```bash

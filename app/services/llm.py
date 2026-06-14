@@ -70,11 +70,23 @@ class LLMService:
         self._llm: Optional[BaseChatModel] = None
         self._current_model_index: int = 0
 
+        logger.info(
+            "llm_service_init",
+            openrouter_base_url=settings.openrouter_base_url,
+            openrouter_model=settings.openrouter_model,
+        )
+
         # Initialize with the default model from settings
         try:
             self._llm = LLMRegistry.get(settings.openrouter_model)
             all_names = LLMRegistry.get_all_names()
             self._current_model_index = all_names.index(settings.openrouter_model)
+
+            logger.info(
+                "llm_client_initialized",
+                model=settings.openrouter_model,
+            )
+
         except ValueError:
             # Fallback safety
             self._llm = LLMRegistry.LLMS[0]["llm"]

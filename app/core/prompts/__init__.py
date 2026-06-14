@@ -11,7 +11,7 @@ def load_system_prompt(**kwargs) -> str:
 
     with open(prompt_path, "r") as f:
         return f.read().format(
-            agent_name=settings.PROJECT_NAME + " Agent",
+            agent_name=settings.project_name + " Agent",
             current_date_and_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             **kwargs,  # Inject dynamic variables like 'long_term_memory'
         )

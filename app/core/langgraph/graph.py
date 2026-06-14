@@ -42,7 +42,14 @@ class LangGraphAgent:
         Lazy-load the mem0ai memory client with pgvector configuration.
         """
         if self.memory is None:
-            self.memory = await AsyncMemory.from_config(
+            logger.info(
+                "mem0_init",
+                llm_base_url=settings.openrouter_base_url,
+                embedder_base_url=settings.openrouter_base_url,
+                embedder_model=settings.openrouter_embedding_model,
+                llm_model=settings.openrouter_model,
+            )
+            self.memory = AsyncMemory.from_config(
                 config_dict={
                     "vector_store": {
                         "provider": "pgvector",
@@ -60,6 +67,7 @@ class LangGraphAgent:
                         "config": {
                             "model": settings.openrouter_model,
                             "openai_base_url": settings.openrouter_base_url,
+                            "api_key": settings.openrouter_api_key,
                         },
                     },
                     "embedder": {
@@ -67,6 +75,7 @@ class LangGraphAgent:
                         "config": {
                             "model": settings.openrouter_embedding_model,
                             "openai_base_url": settings.openrouter_base_url,
+                            "api_key": settings.openrouter_api_key,
                         },
                     },
                 }
@@ -135,11 +144,11 @@ class LangGraphAgent:
             with langfuse.start_as_current_observation(
                 name=f"tool_call:{tool_call['name']}", as_type="span"
             ) as span:
-                span.set_input({"args": tool_call["args"]})
+                span.update(input={"args": tool_call["args"]})
                 tool_result = await self.tools_by_name[tool_call["name"]].ainvoke(
                     tool_call["args"]
                 )
-                span.set_output({"result": str(tool_result)[:500]})
+                span.update(output={"result": str(tool_result)[:500]})
 
                 outputs.append(
                     ToolMessage(
@@ -195,16 +204,16 @@ class LangGraphAgent:
         with langfuse.start_as_current_observation(
             name="memory_search", as_type="span"
         ) as span:
-            span.set_input({"user_id": user_id, "query": messages[-1].content})
+            span.update(input={"user_id": user_id, "query": messages[-1].content})
             memory_client = await self._long_term_memory()
             relevant_memory = await memory_client.search(
-                user_id=user_id, query=messages[-1].content
+                query=messages[-1].content, filters={"user_id": user_id}
             )
             memory_context = "\n".join(
                 [f"* {res['memory']}" for res in relevant_memory.get("results", [])]
             )
-            span.set_output(
-                {
+            span.update(
+                output={
                     "result_count": len(relevant_memory.get("results", [])),
                     "context_length": len(memory_context),
                 }

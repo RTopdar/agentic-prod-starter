@@ -15,6 +15,9 @@ dev:            ## Start the FastAPI dev server with hot-reload
 docker-up:      ## Start all services (db, app, prometheus, grafana, cadvisor)
 	docker-compose up -d
 
+docker-up-build: ## Rebuild images and start all services
+	docker-compose up -d --build
+
 docker-down:    ## Stop and remove all containers
 	docker-compose down
 
